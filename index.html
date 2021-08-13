@@ -1,0 +1,244 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>CORS presentation for RD</title>
+
+		<link rel="stylesheet" href="dist/reset.css">
+		<link rel="stylesheet" href="dist/reveal.css">
+		<link rel="stylesheet" href="dist/theme/black.css">
+
+		<!-- Theme used for syntax highlighted code -->
+		<link rel="stylesheet" href="plugin/highlight/monokai.css">
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<section>
+						<h1>Нейтральная территория CORS</h1>
+					</section>
+					<section>
+						<h3>
+							Оглавление:
+						</h3>
+						<ol>
+							<li>Определение</li>
+							<li>Небольшой экскурс в историю</li>
+							<li>Cross без CORS</li>
+							<li>CORS защищает bank.com</li>
+							<li>Ложка дегтя</li>
+							<li>Как улучшить RocketData ?</li>
+						</ol>
+					</section>
+				</section>
+				<section>
+					<h2>CORS</h2>
+					<h3>Cross-Origin Resource Sharing</h3>
+					<p>политика совместного использования ресурсов между разными источниками</p>
+				</section>
+				<section>
+					<section>
+						<h2>
+							Небольшой экскурс в историю
+						</h2>
+					</section>
+					<section>
+						<p>Кроссдоменный запрос, пока это еще не стало мейнстримом</p>
+						<pre data-id="code-animation"><code class="hljs" data-trim data-line-numbers>
+							<iframe name="iframe"></iframe>
+
+							<form
+									target="iframe"
+									method="POST"
+									action="http://chicken.com/some-data"
+							>
+								...
+							</form>
+						</code></pre>
+					</section>
+					<section>
+						<p>Кроссдоменный запрос, пока это еще не стало мейнстримом 2</p>
+						<pre data-id="code-animation"><code class="hljs" data-trim data-line-numbers="|1-3|5-7|10"><script type="text/template">
+							function handleTemp({temp}) {
+								console.log(temp);
+							}
+
+							let script = document.createElement('script');
+							script.src = `http://chicken.com/temp.json?callback=handleTemp`;
+							document.body.append(script);
+
+							// Cервер должен ответить следующее:
+							handleTemp({temp: 25});
+						</script></code></pre>
+					</section>
+				</section>
+				<section>
+					<section>
+						<h2>Может ничего плохого не произойдет…</h2>
+					</section>
+					<section>
+						<p>CROSS without CORS</p>
+						<img class="r-frame" style="background: rgba(255,255,255,0.1);" src="/images/cross-without-cors-1.png" alt="cross-without-cors">
+					</section>
+					<section>
+						<p>CROSS without CORS</p>
+						<img class="r-frame" style="background: rgba(255,255,255,0.1);" src="/images/cross-without-cors-2.png" alt="cross-without-cors">
+					</section>
+					<section>
+						<p>Как будем защищаться?</p>
+						<img class="r-frame" style="background: rgba(255,255,255,0.1);" src="/images/simple-cors.png" alt="cross-without-cors">
+					</section>
+					<section>
+						<p>Preflight запрос</p>
+						<img class="r-frame" style="background: rgba(255,255,255,0.1);" src="/images/preflight-cors-1.png" alt="cross-without-cors">
+					</section>
+					<section>
+						<p>Preflight запрос</p>
+						<img class="r-frame" style="background: rgba(255,255,255,0.1);" src="/images/preflight-cors-2.png" alt="cross-without-cors">
+					</section>
+				</section>
+				<section>
+					<section>
+						<h2>Ложка дегтя</h2>
+					</section>
+					<section>
+						<p>localhost:8080 ≠ cp.rocketdata.io</p>
+					</section>
+					<section>
+						<p>Ой, CORS, прекрати!</p>
+						<br/>
+						<ol>
+							<li>Access-Controll-Allow-Origin: *</li>
+							<li>Access-Controll-Allow-Origin: localhost:8080</li>
+							<li>proxy</li>
+						</ol>
+					</section>
+				</section>
+				<section>
+					<section>
+						<h2>Как улучшить RocketData?<br/>Шок!</h2>
+					</section>
+					<section>
+						<img class="r-frame" style="background: rgba(255,255,255,0.1);" src="/images/improve-rd-1.png" alt="cross-without-cors">
+					</section>
+					<section>
+						<pre data-id="code-animation"><code class="hljs" data-trim data-line-numbers><script type="text/template">
+							'/op/api': {
+								target: 'https://cp.rocketdata.io',
+							}
+						</script></code></pre>
+					</section>
+					<section>
+						<pre data-id="code-animation"><code class="hljs" data-trim data-line-numbers="|3"><script type="text/template">
+							SET-COOKIE:
+							sessionid=3js4...;
+							Domain=.rocketdata.io;
+							expires=Fri, 27 Aug 2021 05:25:05 GMT;
+							Max-Age=1209600;
+							secure;
+							SameSite=None
+						</script></code></pre>
+					</section>
+					<section>
+						<pre data-id="code-animation"><code class="hljs" data-trim data-line-numbers="3"><script type="text/template">
+							SET-COOKIE:
+							sessionid=3js4...;
+							Domain=.rocketdata.io; // ≠ localhost:8080
+							expires=Fri, 27 Aug 2021 05:25:05 GMT;
+							Max-Age=1209600;
+							secure;
+							SameSite=None
+						</script></code></pre>
+					</section>
+					<section>
+						<pre data-id="code-animation"><code class="hljs" data-trim data-line-numbers="3"><script type="text/template">
+							'/op/api': {
+								target: 'https://cp.rocketdata.io',
+								cookieDomainRewrite: 'localhost',
+							}
+						</script></code></pre>
+					</section>
+					<section>
+						<pre data-id="code-animation"><code class="hljs" data-trim data-line-numbers="6"><script type="text/template">
+							SET-COOKIE:
+							sessionid=3js4...;
+							Domain=.rocketdata.io;
+							expires=Fri, 27 Aug 2021 05:25:05 GMT;
+							Max-Age=1209600;
+							secure;
+							SameSite=None
+						</script></code></pre>
+					</section>
+					<section>
+						<pre data-id="code-animation"><code class="hljs" data-trim data-line-numbers="4-8|7"><script type="text/template">
+							'/op/api': {
+								target: 'https://cp.rocketdata.io',
+								cookieDomainRewrite: 'localhost',
+								onProxyRes: pr => {
+									if (pr.headers['set-cookie']) {
+										pr.headers['set-cookie'] = pr.headers['set-cookie']
+											.map(cookie => cookie.replace(/; secure/gi, ''));
+									}
+								}
+							}
+						</script></code></pre>
+					</section>
+					<section>
+						<pre data-id="code-animation"><code class="hljs" data-trim data-line-numbers="7"><script type="text/template">
+							SET-COOKIE:
+							sessionid=3js4...;
+							Domain=.rocketdata.io;
+							expires=Fri, 27 Aug 2021 05:25:05 GMT;
+							Max-Age=1209600;
+							secure;
+							SameSite=None
+						</script></code></pre>
+					</section>
+					<section>
+						<pre data-id="code-animation"><code class="hljs" data-trim data-line-numbers="9-11"><script type="text/template">
+							'/op/api': {
+								target: 'https://cp.rocketdata.io',
+								cookieDomainRewrite: 'localhost',
+								onProxyRes: pr => {
+									if (pr.headers['set-cookie']) {
+										pr.headers['set-cookie'] = pr.headers['set-cookie']
+											.map(cookie => cookie.replace(/; secure/gi, ''));
+
+										pr.headers['set-cookie'] = pr.headers['set-cookie']
+											.map(cookie =>
+												cookie.replace(/; SameSite=None/gi, '; SameSite=Strict')
+											);
+									}
+								}
+							}
+						</script></code></pre>
+					</section>
+					<section>
+						<pre data-id="code-animation"><code class="hljs" data-trim data-line-numbers="9-11"><script type="text/template">
+							SameSite=Strict;
+						</script></code></pre>
+					</section>
+				</section>
+			</div>
+		</div>
+
+		<script src="dist/reveal.js"></script>
+		<script src="plugin/notes/notes.js"></script>
+		<script src="plugin/markdown/markdown.js"></script>
+		<script src="plugin/highlight/highlight.js"></script>
+		<script>
+			// More info about initialization & config:
+			// - https://revealjs.com/initialization/
+			// - https://revealjs.com/config/
+			Reveal.initialize({
+				hash: true,
+
+				// Learn about plugins: https://revealjs.com/plugins/
+				plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+			});
+		</script>
+	</body>
+</html>
